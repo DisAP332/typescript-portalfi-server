@@ -111,4 +111,52 @@ const deleteFoodItem = async (req: IRequest, res: Response) => {
   }
 };
 
-export default { getFoodItems, createFoodItem, deleteFoodItem };
+const updateFoodItem = async (req: IRequest, res: Response) => {
+  const Data = req.body.Data;
+
+  if (!Data) {
+    results = {
+      success: false,
+      response: "You must provide an food item",
+    };
+    return res.status(400).json(results);
+  }
+
+  try {
+    await DBMethods.Connect(req.headers.user || "undefined");
+    const foodItem: any = await Food.findOne({ _id: req.params.id });
+    foodItem.Name = Data.Name;
+    foodItem.Description = Data.Description;
+    foodItem.Cost = Data.Cost;
+    foodItem.Sale = Data.Sale;
+    foodItem.IsSpecial = Data.IsSpecial;
+    foodItem.Tags = Data.Tags;
+    foodItem.Type = Data.Type;
+    foodItem.Ingredients = Data.Ingredients;
+    await foodItem.save();
+    await retrieveFoodItems();
+    results = {
+      success: true,
+      response: {
+        message: `${req.headers.user}: Successfully updated food item: ${req.params.id}`,
+        foodItems: results.response,
+      },
+    };
+  } catch (error) {
+    results = {
+      success: false,
+      response: error,
+    };
+    console.log(error);
+    res.status(400).json(results);
+  }
+  res.status(200).json(results);
+};
+
+export default {
+  getFoodItems,
+  createFoodItem,
+  deleteFoodItem,
+  updateFoodItem,
+  retrieveFoodItems,
+};

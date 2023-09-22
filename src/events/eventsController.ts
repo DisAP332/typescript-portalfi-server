@@ -28,12 +28,11 @@ const eventsRetrieval = async () => {
         };
       } else {
         await actions.deleteExpired(eventsFound).then((events) => {
-          console.log(events);
+          results = {
+            success: true,
+            response: events,
+          };
         });
-        results = {
-          success: true,
-          response: eventsFound,
-        };
       }
     }
   } catch (error) {
@@ -70,13 +69,13 @@ const createEvent = async (req: IRequest, res: Response) => {
     return res.status(400).json(results);
   }
 
-  const checkDate = await actions.checkIfInPast(Data);
+  const checkDate = actions.checkIfInPast(Data);
   if (checkDate === true) {
     results = {
       success: false,
       response: "Dates cannot be set in the past.",
     };
-    return res.status(400).json(results);
+    return res.status(200).json(results);
   }
 
   try {
@@ -141,7 +140,7 @@ const updateEvent = async (req: IRequest, res: Response) => {
       success: false,
       response: "Dates cannot be set in the past.",
     };
-    return res.status(400).json(results);
+    return res.status(200).json(results);
   }
 
   interface IEvent {
@@ -180,4 +179,10 @@ const updateEvent = async (req: IRequest, res: Response) => {
   res.status(200).json(results);
 };
 
-export default { getEvents, createEvent, deleteEvent, updateEvent };
+export default {
+  getEvents,
+  createEvent,
+  deleteEvent,
+  updateEvent,
+  eventsRetrieval,
+};

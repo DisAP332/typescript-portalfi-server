@@ -5,8 +5,40 @@ import User from "./userModel";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import Event from "../events/eventsModel";
+import Food from "../food/foodModel";
 
 import { Request, Response, NextFunction } from "express";
+
+interface IResults {
+  success: boolean;
+  response: string | object | unknown;
+}
+
+let results: IResults;
+
+interface IData {
+  events: object;
+  food: object;
+}
+
+const getUserData = async (requestor: string) => {
+  try {
+    await DBMethods.Connect(requestor);
+    const eventData = await Event.find({});
+    const foodData = await Food.find({});
+    const data: IData = {
+      events: eventData,
+      food: foodData,
+    };
+    return data;
+  } catch (error) {
+    results = {
+      success: false,
+      response: "Error in user info retrieval",
+    };
+  }
+};
 
 passport.use(
   "login",
@@ -14,7 +46,6 @@ passport.use(
     try {
       await DBMethods.Connect("Users").then(async () => {
         let userExists = await User.findOne({ username: username });
-        console.log(userExists);
         if (!userExists) {
           return done(null, false, { message: "user not found" });
         }
@@ -46,16 +77,27 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
         return next(error.message);
       }
       if (!user) {
-        return res.send({ loggedIn: false, message: info });
+        results = {
+          success: false,
+          response: info,
+        };
+        return res.status(400).json(results);
       }
       if (user) {
         let token = jwt.sign({ user: user }, process.env.JWT_SECRET, {
           expiresIn: "2h",
         });
-        return res.status(200).json({
-          loggedIn: true,
-          token,
-          user: user.username,
+        getUserData(req.body.username).then((data) => {
+          results = {
+            success: true,
+            response: {
+              token: token,
+              user: user.username,
+              events: data?.events,
+              food: data?.food,
+            },
+          };
+          return res.status(200).json(results);
         });
       }
     }

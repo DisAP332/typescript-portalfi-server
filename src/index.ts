@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import userRouter from "./user/userRouter";
 import eventsRouter from "./events/eventsRouter";
 import foodRouter from "./food/foodRouter";
+import drinkRouter from "./drinks/drinksRouter";
 import jwt from "jsonwebtoken";
 
 const app: Express = express();
@@ -43,6 +44,7 @@ const verifyJWT = (req: Request, res: Response, next: NextFunction) => {
 app.use("/user", userRouter);
 app.use("/events", eventsRouter);
 app.use("/food", foodRouter);
+app.use("/drinks", drinkRouter);
 
 app.get("/", async (req: Request, res: Response) => {
   await DBMethods.Connect("user").then((response) => {

@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import "dotenv/config";
 import Event from "../events/eventsModel";
 import Food from "../food/foodModel";
+import Drink from "../drinks/drinksModel";
 
 import { Request, Response, NextFunction } from "express";
 
@@ -20,6 +21,7 @@ let results: IResults;
 interface IData {
   events: object;
   food: object;
+  drinks: object;
 }
 
 const getUserData = async (requestor: string) => {
@@ -27,9 +29,11 @@ const getUserData = async (requestor: string) => {
     await DBMethods.Connect(requestor);
     const eventData = await Event.find({});
     const foodData = await Food.find({});
+    const drinkData = await Drink.find({});
     const data: IData = {
       events: eventData,
       food: foodData,
+      drinks: drinkData,
     };
     return data;
   } catch (error) {
@@ -95,6 +99,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
               user: user.username,
               events: data?.events,
               food: data?.food,
+              drinks: data?.drinks,
             },
           };
           return res.status(200).json(results);

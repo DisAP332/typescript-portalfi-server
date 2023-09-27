@@ -32,11 +32,11 @@ const foodSchema = new Schema<IFood>({
     required: true,
   },
   Sale: {
-    is: {
+    Is: {
       type: Boolean,
       required: true,
     },
-    percentage: {
+    Percentage: {
       type: Number,
       required: true,
     },
@@ -46,15 +46,15 @@ const foodSchema = new Schema<IFood>({
     required: true,
   },
   Tags: {
-    spicy: {
+    Spicy: {
       type: Boolean,
       required: true,
     },
-    raw: {
+    Raw: {
       type: Boolean,
       required: true,
     },
-    allergens: {
+    Allergens: {
       type: Boolean,
       required: true,
     },

@@ -24,7 +24,7 @@ const retrieveDrinkItems = async () => {
       if (!drinkItems.length) {
         results = {
           success: false,
-          response: "No drinks found!",
+          response: [{}],
         };
       } else {
         results = {
@@ -75,7 +75,7 @@ const createDrinkItem = async (req: IRequest, res: Response) => {
         success: true,
         response: {
           message: `${req.headers.user}: Successful creation of drink ${drinkItem._id}`,
-          drinks: results.response,
+          data: results.response,
         },
       };
       return res.status(200).json(results);
@@ -98,7 +98,7 @@ const deleteDrinkItem = async (req: IRequest, res: Response) => {
       success: true,
       response: {
         message: `${req.headers.user}: Successfully deleted drink ${req.params.id}`,
-        drinks: results.response,
+        data: results.response,
       },
     };
     res.status(200).json(results);
@@ -139,7 +139,7 @@ const updateDrinkItem = async (req: IRequest, res: Response) => {
       success: true,
       response: {
         message: `${req.headers.user}: Successfully updated drink: ${req.params.id}`,
-        drinks: results.response,
+        data: results.response,
       },
     };
   } catch (error) {

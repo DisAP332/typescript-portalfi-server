@@ -24,7 +24,7 @@ const eventsRetrieval = async () => {
       if (!eventsFound.length) {
         results = {
           success: false,
-          response: "No events found!",
+          response: [{}],
         };
       } else {
         await actions.deleteExpired(eventsFound).then((events) => {
@@ -87,7 +87,7 @@ const createEvent = async (req: IRequest, res: Response) => {
         success: true,
         response: {
           message: `${req.headers.user}: Successful creation of event ${event._id}`,
-          events: returned.response,
+          data: returned.response,
         },
       };
       return res.status(200).json(results);
@@ -110,7 +110,7 @@ const deleteEvent = async (req: IRequest, res: Response) => {
       success: true,
       response: {
         message: `${req.headers.user}: Successfully deleted event ${req.params.id}`,
-        events: results.response,
+        data: results.response,
       },
     };
   } catch (error) {
@@ -165,7 +165,7 @@ const updateEvent = async (req: IRequest, res: Response) => {
       success: true,
       response: {
         message: `${req.headers.user}: Successfully updated event: ${req.params.id}`,
-        events: results.response,
+        data: results.response,
       },
     };
   } catch (error) {

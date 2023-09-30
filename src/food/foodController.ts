@@ -75,7 +75,7 @@ const createFoodItem = async (req: IRequest, res: Response) => {
         success: true,
         response: {
           message: `${req.headers.user}: Successful creation of food item ${foodItem._id}`,
-          foodItems: results.response,
+          data: results.response,
         },
       };
       return res.status(200).json(results);
@@ -98,7 +98,7 @@ const deleteFoodItem = async (req: IRequest, res: Response) => {
       success: true,
       response: {
         message: `${req.headers.user}: Successfully deleted food item ${req.params.id}`,
-        foodItems: results.response,
+        data: results.response,
       },
     };
     res.status(200).json(results);
@@ -139,7 +139,7 @@ const updateFoodItem = async (req: IRequest, res: Response) => {
       success: true,
       response: {
         message: `${req.headers.user}: Successfully updated food item: ${req.params.id}`,
-        foodItems: results.response,
+        data: results.response,
       },
     };
   } catch (error) {

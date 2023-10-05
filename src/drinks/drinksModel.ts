@@ -28,7 +28,7 @@ const drinkSchema = new Schema<IDrink>({
   },
   Ingredients: {
     type: String,
-    required: true,
+    required: false,
   },
   IsSpecial: {
     type: Boolean,

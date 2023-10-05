@@ -10,6 +10,7 @@ import Food from "../food/foodModel";
 import Drink from "../drinks/drinksModel";
 
 import { Request, Response, NextFunction } from "express";
+import SiteData from "../site/siteModel";
 
 interface IResults {
   success: boolean;
@@ -22,6 +23,7 @@ interface IData {
   events: object;
   food: object;
   drinks: object;
+  publishedData: object;
 }
 
 const getUserData = async (requestor: string) => {
@@ -30,10 +32,12 @@ const getUserData = async (requestor: string) => {
     const eventData = await Event.find({});
     const foodData = await Food.find({});
     const drinkData = await Drink.find({});
+    const publishedData = await SiteData.find({});
     const data: IData = {
       events: eventData,
       food: foodData,
       drinks: drinkData,
+      publishedData: publishedData,
     };
     return data;
   } catch (error) {
@@ -100,6 +104,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
               events: data?.events,
               food: data?.food,
               drinks: data?.drinks,
+              publishedData: data?.publishedData,
             },
           };
           return res.status(200).json(results);

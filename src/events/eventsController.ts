@@ -66,7 +66,7 @@ const createEvent = async (req: IRequest, res: Response) => {
       success: false,
       response: "You must provide an event",
     };
-    return res.status(400).json(results);
+    return res.status(200).json(results);
   }
 
   const checkDate = actions.checkIfInPast(Data);

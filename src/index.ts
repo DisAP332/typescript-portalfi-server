@@ -7,6 +7,7 @@ import userRouter from "./user/userRouter";
 import eventsRouter from "./events/eventsRouter";
 import foodRouter from "./food/foodRouter";
 import drinkRouter from "./drinks/drinksRouter";
+import sitesRouter from "./site/siteRouter";
 import jwt from "jsonwebtoken";
 
 const app: Express = express();
@@ -42,9 +43,10 @@ const verifyJWT = (req: Request, res: Response, next: NextFunction) => {
 // Routes
 
 app.use("/user", userRouter);
-app.use("/events", eventsRouter);
-app.use("/food", foodRouter);
-app.use("/drinks", drinkRouter);
+app.use("/events", verifyJWT, eventsRouter);
+app.use("/food", verifyJWT, foodRouter);
+app.use("/drinks", verifyJWT, drinkRouter);
+app.use("/site", sitesRouter);
 
 app.get("/", async (req: Request, res: Response) => {
   await DBMethods.Connect("user").then((response) => {

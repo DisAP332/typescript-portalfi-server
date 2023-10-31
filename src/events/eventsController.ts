@@ -66,7 +66,8 @@ const createEvent = async (req: IRequest, res: Response) => {
       success: false,
       response: "You must provide an event",
     };
-    return res.status(200).json(results);
+    console.log(results);
+    return res.status(400).json(results);
   }
 
   const checkDate = actions.checkIfInPast(Data);
@@ -97,6 +98,7 @@ const createEvent = async (req: IRequest, res: Response) => {
       success: false,
       response: error,
     };
+    console.log(results);
     return res.status(400).json(results);
   }
 };
@@ -168,6 +170,7 @@ const updateEvent = async (req: IRequest, res: Response) => {
         data: results.response,
       },
     };
+    res.status(200).json(results);
   } catch (error) {
     results = {
       success: false,
@@ -176,7 +179,6 @@ const updateEvent = async (req: IRequest, res: Response) => {
     console.log(error);
     res.status(400).json(results);
   }
-  res.status(200).json(results);
 };
 
 export default {

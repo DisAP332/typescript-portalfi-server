@@ -4,6 +4,13 @@
 
 npm i -D express typescript @types/express @types/node nodemon rimraf concurrently
 
+npx tsc --init
+
+change "outDir": "./dist" in tsconfig.json
+and add
+,
+"exclude": ["node_modules"] to the bottom
+
 add to scripts in package.json
 
     "build": "rimraf dist && npx tsc",
@@ -93,7 +100,7 @@ either connection: true / false message: "error message" "connected success"
 
 # lets impliment a JSON Web Token authentication.
 
--- i am not currently allowing users to sign up on this app or on this server as a added layer of security. 
+-- i am not currently allowing users to sign up on this app or on this server as a added layer of security.
 
 Therfore we go foward with the assumption users have already been created.
 
@@ -102,4 +109,3 @@ lets install our depedencies:
 npm i passport passport-local jsonwebtoken bcrypt cookie-parser
 
 npm i -D @types/passport @types/passport-local @types/bcrypt @types/jsonwebtoken @types/cookie--parser
-

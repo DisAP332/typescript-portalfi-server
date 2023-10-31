@@ -89,7 +89,7 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
           success: false,
           response: info,
         };
-        return res.status(400).json(results);
+        return res.status(401).json(results);
       }
       if (user) {
         let token = jwt.sign({ user: user }, process.env.JWT_SECRET, {

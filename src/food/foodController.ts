@@ -142,6 +142,7 @@ const updateFoodItem = async (req: IRequest, res: Response) => {
         data: results.response,
       },
     };
+    res.status(200).json(results);
   } catch (error) {
     results = {
       success: false,
@@ -150,7 +151,6 @@ const updateFoodItem = async (req: IRequest, res: Response) => {
     console.log(error);
     res.status(400).json(results);
   }
-  res.status(200).json(results);
 };
 
 export default {

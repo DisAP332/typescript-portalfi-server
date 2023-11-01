@@ -12,7 +12,11 @@ import jwt from "jsonwebtoken";
 
 const app: Express = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*", // allow to server to accept request from different origin
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 

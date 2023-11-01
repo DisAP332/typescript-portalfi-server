@@ -14,7 +14,7 @@ const app: Express = express();
 
 app.use(
   cors({
-    origin: "*", // allow to server to accept request from different origin
+    origin: "https://www.portalfi-jbw.com", // allow to server to accept request from different origin
   })
 );
 app.use(express.json());

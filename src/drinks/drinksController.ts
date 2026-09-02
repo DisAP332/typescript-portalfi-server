@@ -13,9 +13,11 @@ const retrieveDrinkItems = async (Drink: Model<any>): Promise<IResults> => {
     const drinkItems = await Drink.find({});
 
     if (!drinkItems.length) {
+      // response stays an array even when empty - callers embed this
+      // directly as `data` for the frontend to .map() over.
       return {
         success: false,
-        response: [{}],
+        response: [],
       };
     }
     return {

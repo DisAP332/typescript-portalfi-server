@@ -13,9 +13,11 @@ const retrieveFoodItems = async (Food: Model<any>): Promise<IResults> => {
     const foodItems = await Food.find({});
 
     if (!foodItems.length) {
+      // response stays an array even when empty - callers embed this
+      // directly as `data` for the frontend to .map() over.
       return {
         success: false,
-        response: "No food items found!",
+        response: [],
       };
     }
     return {

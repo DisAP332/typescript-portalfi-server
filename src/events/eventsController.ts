@@ -13,9 +13,11 @@ const eventsRetrieval = async (Event: Model<any>): Promise<IResults> => {
   try {
     const eventsFound = await Event.find({});
     if (!eventsFound.length) {
+      // response stays an array even when empty - callers embed this
+      // directly as `data` for the frontend to .map() over.
       return {
         success: false,
-        response: [{}],
+        response: [],
       };
     }
     const surviving = await actions.deleteExpired(eventsFound, Event);

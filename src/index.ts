@@ -19,6 +19,7 @@ const app: Express = express();
 const allowedOrigins = [
   "https://www.portalfi-jbw.com",
   "https://pandemoniumky.com",
+  "http://localhost:3000",
 ];
 
 app.use(

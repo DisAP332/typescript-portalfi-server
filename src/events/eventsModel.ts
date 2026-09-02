@@ -36,10 +36,10 @@ const eventSchema = new Schema<IEvent>({
   },
 });
 
-const Event = model<IEvent>("Event", eventSchema);
-
 eventSchema.virtual("url").get(function () {
   return `/events/${this._id}`;
 });
+
+const Event = model<IEvent>("Event", eventSchema);
 
 export default Event;

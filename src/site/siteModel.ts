@@ -40,10 +40,10 @@ const siteDataSchema = new Schema<ISiteData>({
   },
 });
 
-const SiteData = model<ISiteData>("site_data", siteDataSchema);
-
 siteDataSchema.virtual("url").get(function () {
   return `/site/${this._id}`;
 });
+
+const SiteData = model<ISiteData>("site_data", siteDataSchema);
 
 export default SiteData;

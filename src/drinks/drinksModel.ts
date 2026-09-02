@@ -36,10 +36,10 @@ const drinkSchema = new Schema<IDrink>({
   },
 });
 
-const Drink = model<IDrink>("drink", drinkSchema);
-
 drinkSchema.virtual("url").get(function () {
   return `/drinks/${this._id}`;
 });
+
+const Drink = model<IDrink>("drink", drinkSchema);
 
 export default Drink;

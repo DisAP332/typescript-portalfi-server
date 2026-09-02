@@ -69,10 +69,10 @@ const foodSchema = new Schema<IFood>({
   },
 });
 
-const Food = model<IFood>("food", foodSchema);
-
 foodSchema.virtual("url").get(function () {
   return `/food/${this._id}`;
 });
+
+const Food = model<IFood>("food", foodSchema);
 
 export default Food;

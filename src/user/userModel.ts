@@ -23,10 +23,10 @@ const userSchema = new Schema<IUser>({
   },
 });
 
-const User = model<IUser>("User", userSchema);
-
 userSchema.virtual("url").get(function () {
-  return `/drinks/${this._id}`;
+  return `/user/${this._id}`;
 });
+
+const User = model<IUser>("User", userSchema);
 
 export default User;

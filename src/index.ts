@@ -10,6 +10,10 @@ import drinkRouter from "./drinks/drinksRouter";
 import sitesRouter from "./site/siteRouter";
 import verifyJWT from "./auth/verifyJWT";
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET must be set");
+}
+
 const app: Express = express();
 
 const allowedOrigins = [

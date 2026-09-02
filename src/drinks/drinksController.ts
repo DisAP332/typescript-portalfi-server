@@ -1,13 +1,6 @@
 import DBMethods from "../db";
 import Drink from "./drinksModel";
-import { IncomingHttpHeaders } from "http";
 import { Request, Response } from "express";
-
-interface IRequest extends Request {
-  headers: IncomingHttpHeaders & {
-    user?: string;
-  };
-}
 
 interface IResults {
   success: boolean;
@@ -41,9 +34,9 @@ const retrieveDrinkItems = async () => {
   }
 };
 
-const getDrinkItems = async (req: IRequest, res: Response) => {
+const getDrinkItems = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     await retrieveDrinkItems();
     return res.status(200).json(results);
   } catch (error) {
@@ -55,7 +48,7 @@ const getDrinkItems = async (req: IRequest, res: Response) => {
   }
 };
 
-const createDrinkItem = async (req: IRequest, res: Response) => {
+const createDrinkItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
@@ -67,14 +60,14 @@ const createDrinkItem = async (req: IRequest, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     const drinkItem = new Drink(Data);
     await drinkItem.save();
     retrieveDrinkItems().then(() => {
       results = {
         success: true,
         response: {
-          message: `${req.headers.user}: Successful creation of drink ${drinkItem._id}`,
+          message: `${req.tenant}: Successful creation of drink ${drinkItem._id}`,
           data: results.response,
         },
       };
@@ -89,15 +82,15 @@ const createDrinkItem = async (req: IRequest, res: Response) => {
   }
 };
 
-const deleteDrinkItem = async (req: IRequest, res: Response) => {
+const deleteDrinkItem = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     await Drink.findByIdAndDelete({ _id: req.params.id });
     await retrieveDrinkItems();
     results = {
       success: true,
       response: {
-        message: `${req.headers.user}: Successfully deleted drink ${req.params.id}`,
+        message: `${req.tenant}: Successfully deleted drink ${req.params.id}`,
         data: results.response,
       },
     };
@@ -111,7 +104,7 @@ const deleteDrinkItem = async (req: IRequest, res: Response) => {
   }
 };
 
-const updateDrinkItem = async (req: IRequest, res: Response) => {
+const updateDrinkItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
@@ -125,7 +118,7 @@ const updateDrinkItem = async (req: IRequest, res: Response) => {
   console.log(req.params.id);
 
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     const drinkItem: any = await Drink.findOne({ _id: req.params.id });
     drinkItem.Name = Data.Name;
     drinkItem.Cost = Data.Cost;
@@ -138,7 +131,7 @@ const updateDrinkItem = async (req: IRequest, res: Response) => {
     results = {
       success: true,
       response: {
-        message: `${req.headers.user}: Successfully updated drink: ${req.params.id}`,
+        message: `${req.tenant}: Successfully updated drink: ${req.params.id}`,
         data: results.response,
       },
     };

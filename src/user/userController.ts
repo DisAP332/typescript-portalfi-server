@@ -95,7 +95,8 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
         let token = jwt.sign({ user: user }, process.env.JWT_SECRET, {
           expiresIn: "2h",
         });
-        getUserData(req.body.username).then((data) => {
+        // the authenticated user, not the raw request body.
+        getUserData(user.username).then((data) => {
           results = {
             success: true,
             response: {

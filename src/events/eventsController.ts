@@ -1,14 +1,7 @@
 import Event from "./eventsModel";
 import DBMethods from "../db";
 import { Request, Response } from "express";
-import { IncomingHttpHeaders } from "http";
 import actions from "./actions";
-
-interface IRequest extends Request {
-  headers: IncomingHttpHeaders & {
-    user?: string;
-  };
-}
 
 interface IResults {
   success: boolean;
@@ -44,9 +37,9 @@ const eventsRetrieval = async () => {
   return results;
 };
 
-const getEvents = async (req: IRequest, res: Response) => {
+const getEvents = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     await eventsRetrieval();
     return res.status(200).json(results);
   } catch (error) {
@@ -58,7 +51,7 @@ const getEvents = async (req: IRequest, res: Response) => {
   }
 };
 
-const createEvent = async (req: IRequest, res: Response) => {
+const createEvent = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
@@ -80,14 +73,14 @@ const createEvent = async (req: IRequest, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     const event = new Event(Data);
     await event.save();
     eventsRetrieval().then((returned) => {
       results = {
         success: true,
         response: {
-          message: `${req.headers.user}: Successful creation of event ${event._id}`,
+          message: `${req.tenant}: Successful creation of event ${event._id}`,
           data: returned.response,
         },
       };
@@ -103,15 +96,15 @@ const createEvent = async (req: IRequest, res: Response) => {
   }
 };
 
-const deleteEvent = async (req: IRequest, res: Response) => {
+const deleteEvent = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     await Event.findByIdAndDelete({ _id: req.params.id });
     await eventsRetrieval();
     results = {
       success: true,
       response: {
-        message: `${req.headers.user}: Successfully deleted event ${req.params.id}`,
+        message: `${req.tenant}: Successfully deleted event ${req.params.id}`,
         data: results.response,
       },
     };
@@ -125,7 +118,7 @@ const deleteEvent = async (req: IRequest, res: Response) => {
   return res.status(200).json(results);
 };
 
-const updateEvent = async (req: IRequest, res: Response) => {
+const updateEvent = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
@@ -154,7 +147,7 @@ const updateEvent = async (req: IRequest, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     const eventFound: any = await Event.findOne({ _id: req.params.id });
     eventFound.Date = Data.Date;
     eventFound.Name = Data.Name;
@@ -166,7 +159,7 @@ const updateEvent = async (req: IRequest, res: Response) => {
     results = {
       success: true,
       response: {
-        message: `${req.headers.user}: Successfully updated event: ${req.params.id}`,
+        message: `${req.tenant}: Successfully updated event: ${req.params.id}`,
         data: results.response,
       },
     };

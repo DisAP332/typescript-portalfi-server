@@ -1,13 +1,6 @@
 import DBMethods from "../db";
 import Food from "./foodModel";
-import { IncomingHttpHeaders } from "http";
 import { Request, Response } from "express";
-
-interface IRequest extends Request {
-  headers: IncomingHttpHeaders & {
-    user?: string;
-  };
-}
 
 interface IResults {
   success: boolean;
@@ -41,9 +34,9 @@ const retrieveFoodItems = async () => {
   }
 };
 
-const getFoodItems = async (req: IRequest, res: Response) => {
+const getFoodItems = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     await retrieveFoodItems();
     return res.status(200).json(results);
   } catch (error) {
@@ -55,7 +48,7 @@ const getFoodItems = async (req: IRequest, res: Response) => {
   }
 };
 
-const createFoodItem = async (req: IRequest, res: Response) => {
+const createFoodItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
@@ -67,14 +60,14 @@ const createFoodItem = async (req: IRequest, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     const foodItem = new Food(Data);
     await foodItem.save();
     retrieveFoodItems().then(() => {
       results = {
         success: true,
         response: {
-          message: `${req.headers.user}: Successful creation of food item ${foodItem._id}`,
+          message: `${req.tenant}: Successful creation of food item ${foodItem._id}`,
           data: results.response,
         },
       };
@@ -89,15 +82,15 @@ const createFoodItem = async (req: IRequest, res: Response) => {
   }
 };
 
-const deleteFoodItem = async (req: IRequest, res: Response) => {
+const deleteFoodItem = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     await Food.findByIdAndDelete({ _id: req.params.id });
     await retrieveFoodItems();
     results = {
       success: true,
       response: {
-        message: `${req.headers.user}: Successfully deleted food item ${req.params.id}`,
+        message: `${req.tenant}: Successfully deleted food item ${req.params.id}`,
         data: results.response,
       },
     };
@@ -111,7 +104,7 @@ const deleteFoodItem = async (req: IRequest, res: Response) => {
   }
 };
 
-const updateFoodItem = async (req: IRequest, res: Response) => {
+const updateFoodItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
@@ -123,7 +116,7 @@ const updateFoodItem = async (req: IRequest, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.headers.user || "undefined");
+    await DBMethods.Connect(req.tenant);
     const foodItem: any = await Food.findOne({ _id: req.params.id });
     foodItem.Name = Data.Name;
     foodItem.Description = Data.Description;
@@ -138,7 +131,7 @@ const updateFoodItem = async (req: IRequest, res: Response) => {
     results = {
       success: true,
       response: {
-        message: `${req.headers.user}: Successfully updated food item: ${req.params.id}`,
+        message: `${req.tenant}: Successfully updated food item: ${req.params.id}`,
         data: results.response,
       },
     };

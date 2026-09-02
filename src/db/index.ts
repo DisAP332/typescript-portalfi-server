@@ -14,12 +14,12 @@ const Disconnect = async () => {
   return response;
 };
 
-const makeConnection = async (requestor: string) => {
+const makeConnection = async (requestor?: string) => {
   if (!requestor) {
-    response = {
-      connected: false,
-      message: "Please indicate who is connecting to the database",
-    };
+    // throwing rather than returning: callers do not check this response, and
+    // carrying on would leave them querying whichever database was connected
+    // last - another tenant's.
+    throw new Error("Please indicate who is connecting to the database");
   } else {
     try {
       let URI: string;
@@ -40,7 +40,7 @@ const makeConnection = async (requestor: string) => {
   return response;
 };
 
-const Connect = async (requestor: string) => {
+const Connect = async (requestor?: string) => {
   await Disconnect();
   await makeConnection(requestor);
   return response;

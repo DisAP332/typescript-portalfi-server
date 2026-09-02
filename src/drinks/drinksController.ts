@@ -1,33 +1,29 @@
 import DBMethods from "../db";
-import Drink from "./drinksModel";
+import getDrinkModel from "./drinksModel";
 import { Request, Response } from "express";
+import { Model } from "mongoose";
 
 interface IResults {
   success: boolean;
   response: string | object | unknown;
 }
 
-let results: IResults;
-
-const retrieveDrinkItems = async () => {
+const retrieveDrinkItems = async (Drink: Model<any>): Promise<IResults> => {
   try {
     const drinkItems = await Drink.find({});
 
-    if (drinkItems) {
-      if (!drinkItems.length) {
-        results = {
-          success: false,
-          response: [{}],
-        };
-      } else {
-        results = {
-          success: true,
-          response: drinkItems,
-        };
-      }
+    if (!drinkItems.length) {
+      return {
+        success: false,
+        response: [{}],
+      };
     }
+    return {
+      success: true,
+      response: drinkItems,
+    };
   } catch (error) {
-    results = {
+    return {
       success: false,
       response: error,
     };
@@ -36,14 +32,11 @@ const retrieveDrinkItems = async () => {
 
 const getDrinkItems = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.tenant);
-    await retrieveDrinkItems();
+    const Drink = getDrinkModel(DBMethods.getConnection(req.tenant));
+    const results = await retrieveDrinkItems(Drink);
     return res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     res.status(400).json(results);
   }
 };
@@ -52,7 +45,7 @@ const createDrinkItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "You must provide an drink",
     };
@@ -60,46 +53,39 @@ const createDrinkItem = async (req: Request, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.tenant);
+    const Drink = getDrinkModel(DBMethods.getConnection(req.tenant));
     const drinkItem = new Drink(Data);
     await drinkItem.save();
-    retrieveDrinkItems().then(() => {
-      results = {
-        success: true,
-        response: {
-          message: `${req.tenant}: Successful creation of drink ${drinkItem._id}`,
-          data: results.response,
-        },
-      };
-      return res.status(200).json(results);
-    });
-  } catch (error) {
-    results = {
-      success: false,
-      response: error,
+    const retrieved = await retrieveDrinkItems(Drink);
+    const results: IResults = {
+      success: true,
+      response: {
+        message: `${req.tenant}: Successful creation of drink ${drinkItem._id}`,
+        data: retrieved.response,
+      },
     };
+    return res.status(200).json(results);
+  } catch (error) {
+    const results: IResults = { success: false, response: error };
     res.status(400).json(results);
   }
 };
 
 const deleteDrinkItem = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.tenant);
+    const Drink = getDrinkModel(DBMethods.getConnection(req.tenant));
     await Drink.findByIdAndDelete({ _id: req.params.id });
-    await retrieveDrinkItems();
-    results = {
+    const retrieved = await retrieveDrinkItems(Drink);
+    const results: IResults = {
       success: true,
       response: {
         message: `${req.tenant}: Successfully deleted drink ${req.params.id}`,
-        data: results.response,
+        data: retrieved.response,
       },
     };
     res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     res.status(400).json(results);
   }
 };
@@ -108,7 +94,7 @@ const updateDrinkItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "You must provide an drink",
     };
@@ -118,7 +104,7 @@ const updateDrinkItem = async (req: Request, res: Response) => {
   console.log(req.params.id);
 
   try {
-    await DBMethods.Connect(req.tenant);
+    const Drink = getDrinkModel(DBMethods.getConnection(req.tenant));
     const drinkItem: any = await Drink.findOne({ _id: req.params.id });
     drinkItem.Name = Data.Name;
     drinkItem.Cost = Data.Cost;
@@ -127,20 +113,17 @@ const updateDrinkItem = async (req: Request, res: Response) => {
     drinkItem.Ingredients = Data.Ingredients;
     drinkItem.IsSpecial = Data.IsSpecial;
     await drinkItem.save();
-    await retrieveDrinkItems();
-    results = {
+    const retrieved = await retrieveDrinkItems(Drink);
+    const results: IResults = {
       success: true,
       response: {
         message: `${req.tenant}: Successfully updated drink: ${req.params.id}`,
-        data: results.response,
+        data: retrieved.response,
       },
     };
     res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     console.log(error);
     res.status(400).json(results);
   }

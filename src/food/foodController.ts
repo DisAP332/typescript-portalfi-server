@@ -1,33 +1,29 @@
 import DBMethods from "../db";
-import Food from "./foodModel";
+import getFoodModel from "./foodModel";
 import { Request, Response } from "express";
+import { Model } from "mongoose";
 
 interface IResults {
   success: boolean;
   response: string | object | unknown;
 }
 
-let results: IResults;
-
-const retrieveFoodItems = async () => {
+const retrieveFoodItems = async (Food: Model<any>): Promise<IResults> => {
   try {
     const foodItems = await Food.find({});
 
-    if (foodItems) {
-      if (!foodItems.length) {
-        results = {
-          success: false,
-          response: "No food items found!",
-        };
-      } else {
-        results = {
-          success: true,
-          response: foodItems,
-        };
-      }
+    if (!foodItems.length) {
+      return {
+        success: false,
+        response: "No food items found!",
+      };
     }
+    return {
+      success: true,
+      response: foodItems,
+    };
   } catch (error) {
-    results = {
+    return {
       success: false,
       response: error,
     };
@@ -36,14 +32,11 @@ const retrieveFoodItems = async () => {
 
 const getFoodItems = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.tenant);
-    await retrieveFoodItems();
+    const Food = getFoodModel(DBMethods.getConnection(req.tenant));
+    const results = await retrieveFoodItems(Food);
     return res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     res.status(400).json(results);
   }
 };
@@ -52,7 +45,7 @@ const createFoodItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "You must provide an food item",
     };
@@ -60,46 +53,39 @@ const createFoodItem = async (req: Request, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.tenant);
+    const Food = getFoodModel(DBMethods.getConnection(req.tenant));
     const foodItem = new Food(Data);
     await foodItem.save();
-    retrieveFoodItems().then(() => {
-      results = {
-        success: true,
-        response: {
-          message: `${req.tenant}: Successful creation of food item ${foodItem._id}`,
-          data: results.response,
-        },
-      };
-      return res.status(200).json(results);
-    });
-  } catch (error) {
-    results = {
-      success: false,
-      response: error,
+    const retrieved = await retrieveFoodItems(Food);
+    const results: IResults = {
+      success: true,
+      response: {
+        message: `${req.tenant}: Successful creation of food item ${foodItem._id}`,
+        data: retrieved.response,
+      },
     };
+    return res.status(200).json(results);
+  } catch (error) {
+    const results: IResults = { success: false, response: error };
     res.status(400).json(results);
   }
 };
 
 const deleteFoodItem = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.tenant);
+    const Food = getFoodModel(DBMethods.getConnection(req.tenant));
     await Food.findByIdAndDelete({ _id: req.params.id });
-    await retrieveFoodItems();
-    results = {
+    const retrieved = await retrieveFoodItems(Food);
+    const results: IResults = {
       success: true,
       response: {
         message: `${req.tenant}: Successfully deleted food item ${req.params.id}`,
-        data: results.response,
+        data: retrieved.response,
       },
     };
     res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     res.status(400).json(results);
   }
 };
@@ -108,7 +94,7 @@ const updateFoodItem = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "You must provide an food item",
     };
@@ -116,7 +102,7 @@ const updateFoodItem = async (req: Request, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.tenant);
+    const Food = getFoodModel(DBMethods.getConnection(req.tenant));
     const foodItem: any = await Food.findOne({ _id: req.params.id });
     foodItem.Name = Data.Name;
     foodItem.Description = Data.Description;
@@ -127,20 +113,17 @@ const updateFoodItem = async (req: Request, res: Response) => {
     foodItem.Type = Data.Type;
     foodItem.Ingredients = Data.Ingredients;
     await foodItem.save();
-    await retrieveFoodItems();
-    results = {
+    const retrieved = await retrieveFoodItems(Food);
+    const results: IResults = {
       success: true,
       response: {
         message: `${req.tenant}: Successfully updated food item: ${req.params.id}`,
-        data: results.response,
+        data: retrieved.response,
       },
     };
     res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     console.log(error);
     res.status(400).json(results);
   }

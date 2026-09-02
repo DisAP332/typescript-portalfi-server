@@ -1,6 +1,4 @@
-import Event from "./eventsModel";
-
-let Events: any = [];
+import { Model } from "mongoose";
 
 function formatCurrentDate(day: string, month: string, year: string) {
   if (month.length === 1) {
@@ -32,26 +30,23 @@ function formatIncomingDate(date: any) {
 function checkIfInPast(data: any) {
   let eventDate = formatIncomingDate(data.Date);
   let currentDate = getCurrentDate();
-  if (eventDate < currentDate) {
-    // is in the past therefore we will delete
-    return true;
-  } else {
-    // is in the future therefore push to events.
-    Events.push(data);
-    return false;
-  }
+  return eventDate < currentDate;
 }
 
-async function deleteExpired(data: any) {
-  Events = [];
+async function deleteExpired(data: any, Event: Model<any>) {
+  const surviving = [];
   for (let i = 0; i < data.length; i++) {
-    if (checkIfInPast(data[i]) === true) {
+    if (checkIfInPast(data[i])) {
+      // is in the past therefore we will delete
       let id = JSON.stringify(data[i]._id);
       id = JSON.parse(id);
       await Event.findByIdAndDelete({ _id: id });
+    } else {
+      // is in the future therefore keep.
+      surviving.push(data[i]);
     }
   }
-  return Events;
+  return surviving;
 }
 
 const actions = {

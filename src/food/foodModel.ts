@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Connection, Model } from "mongoose";
 
 interface IFood {
   Name: string;
@@ -73,6 +73,13 @@ foodSchema.virtual("url").get(function () {
   return `/food/${this._id}`;
 });
 
-const Food = model<IFood>("food", foodSchema);
+const MODEL_NAME = "food";
 
-export default Food;
+// a per-tenant connection is cached (useDb useCache: true) and reused
+// across requests, so model() can only be called on it once - registering
+// again on the same connection throws OverwriteModelError.
+const getFoodModel = (connection: Connection): Model<IFood> =>
+  (connection.models[MODEL_NAME] as Model<IFood>) ??
+  connection.model<IFood>(MODEL_NAME, foodSchema);
+
+export default getFoodModel;

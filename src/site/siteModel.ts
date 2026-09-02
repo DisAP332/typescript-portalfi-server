@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Connection, Model } from "mongoose";
 
 interface ISiteData {
   Events: object;
@@ -44,6 +44,10 @@ siteDataSchema.virtual("url").get(function () {
   return `/site/${this._id}`;
 });
 
-const SiteData = model<ISiteData>("site_data", siteDataSchema);
+const MODEL_NAME = "site_data";
 
-export default SiteData;
+const getSiteModel = (connection: Connection): Model<ISiteData> =>
+  (connection.models[MODEL_NAME] as Model<ISiteData>) ??
+  connection.model<ISiteData>(MODEL_NAME, siteDataSchema);
+
+export default getSiteModel;

@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Connection, Model } from "mongoose";
 
 interface IUser {
   username: string;
@@ -27,6 +27,10 @@ userSchema.virtual("url").get(function () {
   return `/user/${this._id}`;
 });
 
-const User = model<IUser>("User", userSchema);
+const MODEL_NAME = "User";
 
-export default User;
+const getUserModel = (connection: Connection): Model<IUser> =>
+  (connection.models[MODEL_NAME] as Model<IUser>) ??
+  connection.model<IUser>(MODEL_NAME, userSchema);
+
+export default getUserModel;

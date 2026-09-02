@@ -47,18 +47,24 @@ app.use("/drinks", verifyJWT, drinkRouter);
 app.use("/site", verifyJWT, sitesRouter);
 
 app.get("/", async (req: Request, res: Response) => {
-  await DBMethods.Connect("user").then((response) => {
-    console.log(response);
-  });
   res.send("we here");
 });
 
 const httpPort = process.env.HTTP_PORT;
 const httpsPort = process.env.HTTPS_PORT;
 
-app.listen(httpPort, () => {
-  console.log(`HTTP server running on ${httpPort}`);
-});
-app.listen(httpsPort, () => {
-  console.log(`HTTPS server running on httpsPort`);
+async function main() {
+  await DBMethods.connect();
+
+  app.listen(httpPort, () => {
+    console.log(`HTTP server running on ${httpPort}`);
+  });
+  app.listen(httpsPort, () => {
+    console.log(`HTTPS server running on httpsPort`);
+  });
+}
+
+main().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
 });

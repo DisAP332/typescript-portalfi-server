@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Connection, Model } from "mongoose";
 
 interface IDrink {
   Name: string;
@@ -40,6 +40,10 @@ drinkSchema.virtual("url").get(function () {
   return `/drinks/${this._id}`;
 });
 
-const Drink = model<IDrink>("drink", drinkSchema);
+const MODEL_NAME = "drink";
 
-export default Drink;
+const getDrinkModel = (connection: Connection): Model<IDrink> =>
+  (connection.models[MODEL_NAME] as Model<IDrink>) ??
+  connection.model<IDrink>(MODEL_NAME, drinkSchema);
+
+export default getDrinkModel;

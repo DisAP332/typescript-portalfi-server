@@ -1,52 +1,43 @@
-import Event from "./eventsModel";
+import getEventModel from "./eventsModel";
 import DBMethods from "../db";
 import { Request, Response } from "express";
 import actions from "./actions";
+import { Model } from "mongoose";
 
 interface IResults {
   success: boolean;
   response: string | object | unknown;
 }
 
-let results: IResults;
-
-const eventsRetrieval = async () => {
+const eventsRetrieval = async (Event: Model<any>): Promise<IResults> => {
   try {
     const eventsFound = await Event.find({});
-    if (eventsFound) {
-      if (!eventsFound.length) {
-        results = {
-          success: false,
-          response: [{}],
-        };
-      } else {
-        await actions.deleteExpired(eventsFound).then((events) => {
-          results = {
-            success: true,
-            response: events,
-          };
-        });
-      }
+    if (!eventsFound.length) {
+      return {
+        success: false,
+        response: [{}],
+      };
     }
+    const surviving = await actions.deleteExpired(eventsFound, Event);
+    return {
+      success: true,
+      response: surviving,
+    };
   } catch (error) {
-    results = {
+    return {
       success: false,
       response: error,
     };
   }
-  return results;
 };
 
 const getEvents = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.tenant);
-    await eventsRetrieval();
+    const Event = getEventModel(DBMethods.getConnection(req.tenant));
+    const results = await eventsRetrieval(Event);
     return res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     return res.status(400).json(results);
   }
 };
@@ -55,7 +46,7 @@ const createEvent = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "You must provide an event",
     };
@@ -65,7 +56,7 @@ const createEvent = async (req: Request, res: Response) => {
 
   const checkDate = actions.checkIfInPast(Data);
   if (checkDate === true) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "Dates cannot be set in the past.",
     };
@@ -73,24 +64,20 @@ const createEvent = async (req: Request, res: Response) => {
   }
 
   try {
-    await DBMethods.Connect(req.tenant);
+    const Event = getEventModel(DBMethods.getConnection(req.tenant));
     const event = new Event(Data);
     await event.save();
-    eventsRetrieval().then((returned) => {
-      results = {
-        success: true,
-        response: {
-          message: `${req.tenant}: Successful creation of event ${event._id}`,
-          data: returned.response,
-        },
-      };
-      return res.status(200).json(results);
-    });
-  } catch (error) {
-    results = {
-      success: false,
-      response: error,
+    const retrieved = await eventsRetrieval(Event);
+    const results: IResults = {
+      success: true,
+      response: {
+        message: `${req.tenant}: Successful creation of event ${event._id}`,
+        data: retrieved.response,
+      },
     };
+    return res.status(200).json(results);
+  } catch (error) {
+    const results: IResults = { success: false, response: error };
     console.log(results);
     return res.status(400).json(results);
   }
@@ -98,31 +85,28 @@ const createEvent = async (req: Request, res: Response) => {
 
 const deleteEvent = async (req: Request, res: Response) => {
   try {
-    await DBMethods.Connect(req.tenant);
+    const Event = getEventModel(DBMethods.getConnection(req.tenant));
     await Event.findByIdAndDelete({ _id: req.params.id });
-    await eventsRetrieval();
-    results = {
+    const retrieved = await eventsRetrieval(Event);
+    const results: IResults = {
       success: true,
       response: {
         message: `${req.tenant}: Successfully deleted event ${req.params.id}`,
-        data: results.response,
+        data: retrieved.response,
       },
     };
+    return res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     return res.status(400).json(results);
   }
-  return res.status(200).json(results);
 };
 
 const updateEvent = async (req: Request, res: Response) => {
   const Data = req.body.Data;
 
   if (!Data) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "You must provide an event",
     };
@@ -131,23 +115,15 @@ const updateEvent = async (req: Request, res: Response) => {
 
   const checkDate = actions.checkIfInPast(Data);
   if (checkDate === true) {
-    results = {
+    const results: IResults = {
       success: false,
       response: "Dates cannot be set in the past.",
     };
     return res.status(200).json(results);
   }
 
-  interface IEvent {
-    Date?: string;
-    Name?: string;
-    Time?: string;
-    Description?: string;
-    Cost?: string;
-  }
-
   try {
-    await DBMethods.Connect(req.tenant);
+    const Event = getEventModel(DBMethods.getConnection(req.tenant));
     const eventFound: any = await Event.findOne({ _id: req.params.id });
     eventFound.Date = Data.Date;
     eventFound.Name = Data.Name;
@@ -155,20 +131,17 @@ const updateEvent = async (req: Request, res: Response) => {
     eventFound.Description = Data.Description;
     eventFound.Cost = Data.Cost;
     await eventFound.save();
-    await eventsRetrieval();
-    results = {
+    const retrieved = await eventsRetrieval(Event);
+    const results: IResults = {
       success: true,
       response: {
         message: `${req.tenant}: Successfully updated event: ${req.params.id}`,
-        data: results.response,
+        data: retrieved.response,
       },
     };
     res.status(200).json(results);
   } catch (error) {
-    results = {
-      success: false,
-      response: error,
-    };
+    const results: IResults = { success: false, response: error };
     console.log(error);
     res.status(400).json(results);
   }

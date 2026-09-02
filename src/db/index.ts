@@ -1,53 +1,31 @@
-import mongoose, { createConnection } from "mongoose";
+import mongoose, { Connection } from "mongoose";
 
-interface IRes {
-  connected: boolean;
-  message: any;
-}
+let baseConnection: Connection | undefined;
 
-let response: IRes;
-
-const Disconnect = async () => {
-  await mongoose.connection.close().then(() => {
-    response = { connected: false, message: "Disconnected from database" };
-  });
-  return response;
-};
-
-const makeConnection = async (requestor?: string) => {
-  if (!requestor) {
-    // throwing rather than returning: callers do not check this response, and
-    // carrying on would leave them querying whichever database was connected
-    // last - another tenant's.
-    throw new Error("Please indicate who is connecting to the database");
-  } else {
-    try {
-      let URI: string;
-      URI = process.env.DATABASE + `${requestor}?retryWrites=true&w=majority`;
-      await mongoose.connect(URI).then(() => {
-        response = {
-          connected: true,
-          message: `Connected to ${requestor} DATABASE successfully`,
-        };
-      });
-    } catch (err) {
-      response = {
-        connected: false,
-        message: err,
-      };
-    }
+// one real connection at boot; every tenant afterward gets a cached
+// per-database handle off of it via useDb(), not a fresh connection.
+const connect = async () => {
+  if (!baseConnection) {
+    baseConnection = await mongoose
+      .createConnection(`${process.env.DATABASE}?retryWrites=true&w=majority`)
+      .asPromise();
   }
-  return response;
+  return baseConnection;
 };
 
-const Connect = async (requestor?: string) => {
-  await Disconnect();
-  await makeConnection(requestor);
-  return response;
+const getConnection = (requestor?: string): Connection => {
+  if (!requestor) {
+    throw new Error("Please indicate who is connecting to the database");
+  }
+  if (!baseConnection) {
+    throw new Error("Database connection has not been established yet");
+  }
+  return baseConnection.useDb(requestor, { useCache: true });
 };
 
 const DBMethods = {
-  Connect,
+  connect,
+  getConnection,
 };
 
 export default DBMethods;

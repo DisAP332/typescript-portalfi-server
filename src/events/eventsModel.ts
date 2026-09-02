@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+import { Schema, Connection, Model } from "mongoose";
 
 interface IEvent {
   Date: string;
@@ -40,6 +40,10 @@ eventSchema.virtual("url").get(function () {
   return `/events/${this._id}`;
 });
 
-const Event = model<IEvent>("Event", eventSchema);
+const MODEL_NAME = "Event";
 
-export default Event;
+const getEventModel = (connection: Connection): Model<IEvent> =>
+  (connection.models[MODEL_NAME] as Model<IEvent>) ??
+  connection.model<IEvent>(MODEL_NAME, eventSchema);
+
+export default getEventModel;

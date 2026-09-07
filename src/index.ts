@@ -4,9 +4,9 @@ import "dotenv/config";
 import DBMethods from "./db";
 import cookieParser from "cookie-parser";
 import userRouter from "./user/userRouter";
-import eventsRouter from "./events/eventsRouter";
-import foodRouter from "./food/foodRouter";
-import drinkRouter from "./drinks/drinksRouter";
+import { eventsRouter } from "./content-types/events";
+import { foodRouter } from "./content-types/food";
+import { drinksRouter } from "./content-types/drinks";
 import sitesRouter from "./site/siteRouter";
 import verifyJWT from "./auth/verifyJWT";
 
@@ -43,7 +43,7 @@ app.use(cookieParser());
 app.use("/user", userRouter);
 app.use("/events", verifyJWT, eventsRouter);
 app.use("/food", verifyJWT, foodRouter);
-app.use("/drinks", verifyJWT, drinkRouter);
+app.use("/drinks", verifyJWT, drinksRouter);
 app.use("/site", verifyJWT, sitesRouter);
 
 app.get("/", async (req: Request, res: Response) => {

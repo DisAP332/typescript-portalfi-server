@@ -5,9 +5,9 @@ import getUserModel from "./userModel";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
-import getEventModel from "../events/eventsModel";
-import getFoodModel from "../food/foodModel";
-import getDrinkModel from "../drinks/drinksModel";
+import { getEventModel } from "../content-types/events";
+import { getFoodModel } from "../content-types/food";
+import { getDrinkModel } from "../content-types/drinks";
 import getSiteModel from "../site/siteModel";
 
 import { Request, Response, NextFunction } from "express";

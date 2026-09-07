@@ -19,20 +19,15 @@ interface IResults {
 // ************* middleware ************* //
 
 const verifyJWT = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies?.token;
 
-  if (!authHeader) {
+  if (!token) {
     const results: IResults = {
       success: false,
       response: "No token provided.",
     };
     return res.status(401).json(results);
   }
-
-  // the dashboard sends the bare token, but accept "Bearer <token>" too.
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice("Bearer ".length)
-    : authHeader;
 
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET) as ITokenPayload;

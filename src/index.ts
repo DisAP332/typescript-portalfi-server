@@ -33,6 +33,9 @@ app.use(
       }
       return callback(null, true);
     },
+    // the auth cookie is only sent cross-origin if both sides opt in:
+    // this on the server, withCredentials on the frontend's axios calls.
+    credentials: true,
   })
 );
 app.use(express.json());

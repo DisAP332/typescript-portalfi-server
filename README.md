@@ -1,111 +1,53 @@
-# Enable nodemon to restart server / Use concurrently / rimraf to delete old dist folder on rebuild.
+# PortalFi server
 
-# download types for express and node
+Multi-tenant Express/Mongoose API behind the PortalFi dashboard. Each venue
+is a "tenant" - its own database on one shared Mongo connection, selected by
+the username it logs in with (see `src/db/index.ts`).
 
-npm i -D express typescript @types/express @types/node nodemon rimraf concurrently
+## Setup
 
-npx tsc --init
+```bash
+npm install
+cp .env.example .env   # fill in JWT_SECRET and ALLOWED_ORIGINS - see below
+npm run local-mongo    # separate terminal: an in-memory Mongo for local dev
+npm run seed-user -- <venue-username> <password>
+npm run serve           # tsc -w + nodemon, or: npm run build && npm start
+```
 
-change "outDir": "./dist" in tsconfig.json
-and add
-,
-"exclude": ["node_modules"] to the bottom
+## Configuration
 
-add to scripts in package.json
+Every value a new deployment needs to change lives in `.env` (see
+`.env.example`) - nothing else in the code should need editing to point
+this server at a new venue's database or frontend:
 
-    "build": "rimraf dist && npx tsc",
-    "prestart": "npm run build",
-    "start": "node dist/index.js",
-    "predev": "npm run build",
-    "dev": "concurrently \"npx tsc -w\" \"nodemon dist/index.js\""
+| Variable          | What it is                                                                 |
+| ------------------ | --------------------------------------------------------------------------- |
+| `DATABASE`         | Mongo connection string, no database name (one is selected per tenant).   |
+| `HTTP_PORT`        | Port for the plain HTTP listener.                                         |
+| `HTTPS_PORT`        | Port for the HTTPS listener.                                              |
+| `JWT_SECRET`        | Must exactly match the frontend's `JWT_SECRET`. `openssl rand -hex 48`.    |
+| `ALLOWED_ORIGINS`   | Comma-separated frontend origin(s) allowed to call this API with cookies. |
 
-# now download cors along with types & dotenv for hidden enviorment variables.
+## Adding a venue
 
-npm i cors dotenv
-npm i -D @types/cors
+A venue is just a username. `npm run seed-user -- <username> <password>`
+creates its login; logging in with that username is what selects its
+database (see `src/user/userController.ts`). There's no separate signup
+flow by design - accounts are provisioned, not self-served.
 
-# create your enviorment variables in .env: touch .env
+## Content types
 
-add to .env:
-HTTPS_PORT = 8443
-HTTP_PORT = 8080
+Food, drinks, and events are all built on one generic engine
+(`src/content/contentModel.ts`, `contentController.ts`, `contentRouter.ts`).
+Adding a new content type is a new file under `src/content-types/` that
+defines a schema and wires the three factories together - see
+`src/content-types/food.ts` for the smallest example.
 
-# create .gitignore and place node_modules and .env inside.
+## Testing
 
-touch .gitignore
-.gitignore:
-.env
-node_modules
+```bash
+npm test
+```
 
-/// this is to make sure now that you dont upload sensitive data to your github ///
-
-# create your index.ts file and import express, cors, configDotenv.
-
-import express, { Express, Request, Response } from "express";
-import cors from "cors"
-import "dotenv/config";
-
-# add Express to initilize under the app constant. You will use this a moniker for the express function
-
-# create a '/' route on a GET endpoint as a test for the server is up.
-
-const app: Express = express();
-
-app.use(cors())
-app.use(express.json())
-
-app.get("/", (req: Request, res: Response) => {
-res.send("server is online");
-});
-
-# have your app listen on a http port and https port 8080 and 8443 respsectivly.
-
-# use your .env file to keep these ports hidden. pull them from there with process.env.VARIABLE HERE
-
-const httpPort = process.env.HTTP_PORT
-const httpsPort = process.env.HTTPS_PORT
-
-app.listen(httpPort, () => {
-console.log(`HTTP server running on httpPort`);
-});
-app.listen(httpsPort, () => {
-console.log(`HTTPS server running on httpsPort}`);
-});
-
-# lets create our database connection via mongoose
-
-npm i mongoose
-
-mkdir database
-cd database
-touch index.ts
-
-# we are going to formulate our mongoose connection to redirect
-
-# to different database dependent on what user is logged in.
-
-add your mongodb URI from mongoDB atlas. You can find this in your DB.
-only add the part before ?retryWrites have it like this.
-URI = process.env.DATABASE + `${requestor}?retryWrites=true&w=majority`;
-this will allow you to use the requestor paramater to indicate what databaase to log into.
-
-import { createConnection } from "mongoose";
-
-create a function called Connection, make it async, with a parameter requestor that is type: string
-
-create error handling for if requestor is not present,
-
-wrap your connection in a try catch for error handling of mongoose connection and return
-either connection: true / false message: "error message" "connected success"
-
-# lets impliment a JSON Web Token authentication.
-
--- i am not currently allowing users to sign up on this app or on this server as a added layer of security.
-
-Therfore we go foward with the assumption users have already been created.
-
-lets install our depedencies:
-
-npm i passport passport-local jsonwebtoken bcrypt cookie-parser
-
-npm i -D @types/passport @types/passport-local @types/bcrypt @types/jsonwebtoken @types/cookie--parser
+Runs against a real, disposable `mongodb-memory-server` instance (see
+`tests/globalSetup.js`) - no external services needed.

@@ -83,6 +83,25 @@ describe("food CRUD", () => {
     expect(res.status).toBe(404);
   });
 
+  it("treats PUT as a full replace, not a partial merge", async () => {
+    const agent = await loggedInAgent();
+    const createRes = await agent.post("/food").send({ Data: VALID_FOOD });
+    const id = createRes.body.response.data[0]._id;
+
+    // omits every required field but Name/Description/Cost - a full
+    // replace should reject this instead of silently keeping the old
+    // Sale/IsSpecial/Tags/Type/Ingredients values.
+    const res = await agent
+      .put(`/food/${id}`)
+      .send({ Data: { Name: "Loaded Nachos", Description: "x", Cost: 14 } });
+
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    // the whole point of the errorMessage fix: a real string, not {}.
+    expect(typeof res.body.response).toBe("string");
+    expect(res.body.response.length).toBeGreaterThan(0);
+  });
+
   it("keeps tenants' food lists isolated from one another", async () => {
     const agentA = await loggedInAgent();
     const agentB = await loggedInAgent();

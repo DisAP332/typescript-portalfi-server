@@ -10,6 +10,7 @@
     "preserve": "npm run build",
     "serve": "concurrently \"npx tsc -w\"  \"nodemon dist/index.js\"",
     "local-mongo": "node scripts/local-mongo.js",
+    "seed-user": "node scripts/seed-user.js",
     "test": "jest"
   },
   "keywords": [],

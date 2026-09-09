@@ -35,6 +35,15 @@ beforeAll(async () => {
 });
 
 describe("event validation", () => {
+  it("returns a clean 400 (not an uncaught 500) when Date is missing", async () => {
+    const { agent } = await loggedInAgent();
+    const res = await agent.post("/events").send({
+      Data: { Name: "No Date", Time: "19:00", Description: "x", Cost: "0" },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
+
   it("rejects a create with a past date as a well-formed 200, not a 400", async () => {
     const { agent } = await loggedInAgent();
     const res = await agent.post("/events").send({

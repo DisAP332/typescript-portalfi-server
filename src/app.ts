@@ -12,14 +12,18 @@ import verifyJWT from "./auth/verifyJWT";
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET must be set");
 }
+if (!process.env.ALLOWED_ORIGINS) {
+  throw new Error("ALLOWED_ORIGINS must be set");
+}
 
 const app: Express = express();
 
-const allowedOrigins = [
-  "https://www.portalfi-jbw.com",
-  "https://pandemoniumky.com",
-  "http://localhost:3000",
-];
+// comma-separated frontend origin(s) allowed to call this API with
+// credentials - the only thing a new venue deployment needs to change
+// here is its .env, not this file.
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",").map((origin) =>
+  origin.trim()
+);
 
 app.use(
   cors({
@@ -46,7 +50,9 @@ app.use("/user", userRouter);
 app.use("/events", verifyJWT, eventsRouter);
 app.use("/food", verifyJWT, foodRouter);
 app.use("/drinks", verifyJWT, drinksRouter);
-app.use("/site", verifyJWT, sitesRouter);
+// siteRouter applies verifyJWT itself, per-route - it also serves a public,
+// unauthenticated route for the venue's separate public-facing website.
+app.use("/site", sitesRouter);
 
 app.get("/", async (req: Request, res: Response) => {
   res.send("we here");

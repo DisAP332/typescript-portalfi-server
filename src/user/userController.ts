@@ -80,7 +80,6 @@ passport.use(
 );
 
 const loginUser = async (req: Request, res: Response, next: NextFunction) => {
-  console.log(req.body);
   passport.authenticate(
     "login",
     async (

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Connection, HydratedDocument, Model } from "mongoose";
 import DBMethods from "../db";
+import { errorMessage } from "../utils/errorMessage";
 
 interface IResults {
   success: boolean;
@@ -32,10 +33,17 @@ export function createContentController<T>({
   afterRetrieve,
   validate,
 }: ContentControllerConfig<T>) {
-  const retrieveItems = async (Model: Model<T>): Promise<IResults> => {
+  // prune runs the (potentially expensive) afterRetrieve hook - only
+  // getItems (a genuine read) opts in. createItem/deleteItem/updateItem
+  // call this afterward just to hand back a fresh list for the UI, and
+  // don't need to pay for a prune-and-delete sweep on every write.
+  const retrieveItems = async (
+    Model: Model<T>,
+    { prune = false }: { prune?: boolean } = {}
+  ): Promise<IResults> => {
     try {
       let items = await Model.find({});
-      if (afterRetrieve) items = await afterRetrieve(items, Model);
+      if (prune && afterRetrieve) items = await afterRetrieve(items, Model);
 
       if (!items.length) {
         // response stays an array even when empty - callers embed this
@@ -44,17 +52,17 @@ export function createContentController<T>({
       }
       return { success: true, response: items };
     } catch (error) {
-      return { success: false, response: error };
+      return { success: false, response: errorMessage(error) };
     }
   };
 
   const getItems = async (req: Request, res: Response) => {
     try {
       const Model = getModel(DBMethods.getConnection(req.tenant));
-      const results = await retrieveItems(Model);
+      const results = await retrieveItems(Model, { prune: true });
       return res.status(200).json(results);
     } catch (error) {
-      const results: IResults = { success: false, response: error };
+      const results: IResults = { success: false, response: errorMessage(error) };
       res.status(400).json(results);
     }
   };
@@ -71,12 +79,23 @@ export function createContentController<T>({
     }
 
     if (validate) {
-      const error = validate(Data);
-      if (error) {
+      let validationError: string | null;
+      try {
+        validationError = validate(Data);
+      } catch {
+        // validate() can throw on malformed input (e.g. events' Date isn't
+        // a well-formed date string) - without this, that throw would
+        // escape uncaught and hit Express's default 500 handler instead
+        // of the normal {success,response} envelope.
+        return res
+          .status(400)
+          .json({ success: false, response: `Invalid ${itemLabel} data.` });
+      }
+      if (validationError) {
         // matches the original events behavior: a rejected-but-well-formed
         // submission (date in the past) is a 200 with success: false, not
         // a 400 - the request itself was fine, the content wasn't.
-        return res.status(200).json({ success: false, response: error });
+        return res.status(200).json({ success: false, response: validationError });
       }
     }
 
@@ -94,7 +113,7 @@ export function createContentController<T>({
       };
       return res.status(200).json(results);
     } catch (error) {
-      const results: IResults = { success: false, response: error };
+      const results: IResults = { success: false, response: errorMessage(error) };
       res.status(400).json(results);
     }
   };
@@ -113,7 +132,7 @@ export function createContentController<T>({
       };
       res.status(200).json(results);
     } catch (error) {
-      const results: IResults = { success: false, response: error };
+      const results: IResults = { success: false, response: errorMessage(error) };
       res.status(400).json(results);
     }
   };
@@ -130,9 +149,16 @@ export function createContentController<T>({
     }
 
     if (validate) {
-      const error = validate(Data);
-      if (error) {
-        return res.status(200).json({ success: false, response: error });
+      let validationError: string | null;
+      try {
+        validationError = validate(Data);
+      } catch {
+        return res
+          .status(400)
+          .json({ success: false, response: `Invalid ${itemLabel} data.` });
+      }
+      if (validationError) {
+        return res.status(200).json({ success: false, response: validationError });
       }
     }
 
@@ -146,7 +172,16 @@ export function createContentController<T>({
         };
         return res.status(404).json(results);
       }
-      item.set(Data);
+      // overwrite() clears every existing path before applying Data, then
+      // save() validates the resulting document as a whole - true PUT/
+      // full-replace semantics (an omitted required field fails
+      // validation, same as the old per-type controllers) generically,
+      // instead of item.set(Data)'s partial merge, which silently kept
+      // old values for any field a caller omitted. _id/__v are stripped
+      // since the frontend's edit form round-trips the whole fetched
+      // item, which carries both.
+      const { _id, __v, ...replacement } = Data as Record<string, unknown>;
+      item.overwrite(replacement);
       await item.save();
       const retrieved = await retrieveItems(Model);
       const results: IResults = {
@@ -158,7 +193,7 @@ export function createContentController<T>({
       };
       res.status(200).json(results);
     } catch (error) {
-      const results: IResults = { success: false, response: error };
+      const results: IResults = { success: false, response: errorMessage(error) };
       res.status(400).json(results);
     }
   };

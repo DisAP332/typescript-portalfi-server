@@ -12,7 +12,7 @@ async function main() {
     console.log(`HTTP server running on ${httpPort}`);
   });
   app.listen(httpsPort, () => {
-    console.log(`HTTPS server running on httpsPort`);
+    console.log(`HTTPS server running on ${httpsPort}`);
   });
 }
 

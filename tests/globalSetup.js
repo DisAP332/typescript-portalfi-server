@@ -11,5 +11,6 @@ module.exports = async function globalSetup() {
   global.__MONGOD__ = mongod;
   process.env.DATABASE = mongod.getUri();
   process.env.JWT_SECRET = "test-secret-do-not-use-in-production";
+  process.env.ALLOWED_ORIGINS = "http://localhost:3000";
   process.env.NODE_ENV = "test";
 };
